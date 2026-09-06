@@ -52,7 +52,7 @@ function startBGM() {
     if (ac.state === 'suspended' && typeof ac.resume === 'function') ac.resume().catch(() => {});
 
     bgmGain = ac.createGain();
-    bgmGain.gain.value = 0.18; // BGM 音量（若干上げました）
+    bgmGain.gain.value = 0.36; // BGM 音量（2倍に増やしました: 0.18 -> 0.36）
     if (masterGain) bgmGain.connect(masterGain); else bgmGain.connect(ac.destination);
 
     // 簡単なメロディ（周波数, 秒）
