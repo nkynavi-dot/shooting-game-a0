@@ -12,6 +12,17 @@ const joystickHandle = document.getElementById('joystick-handle');
 const fireBtn = document.getElementById('fireBtn');
 
 let W, H;
+
+// ゲーム状態（player を resize 前に宣言して参照エラーを防ぐ）
+let player = null;
+let keys = {};
+let bullets = [];
+let enemies = [];
+let score = 0;
+let lives = 3;
+let running = false;
+let spawnTimer = 0;
+
 function resize() {
   W = canvas.width = Math.min(720, window.innerWidth - 20);
   H = canvas.height = Math.max(400, window.innerHeight - 140);
@@ -20,16 +31,6 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
-
-// ゲーム状態
-let keys = {};
-let bullets = [];
-let enemies = [];
-let player = null;
-let score = 0;
-let lives = 3;
-let running = false;
-let spawnTimer = 0;
 
 startBtn.addEventListener('click', startGame);
 window.addEventListener('keydown', e => keys[e.key] = true);
