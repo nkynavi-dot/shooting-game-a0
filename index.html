@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Shooting Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="ui">
+    <div id="score">Score: 0</div>
+    <div id="lives">Lives: 3</div>
+    <button id="startBtn">Start / Restart</button>
+  </div>
+  <canvas id="game"></canvas>
+
+  <!-- タッチコントロール -->
+  <div id="touch-controls" aria-hidden="false">
+    <div id="joystick" class="touch-area" aria-label="移動スティック">
+      <div id="joystick-handle"></div>
+    </div>
+    <button id="fireBtn" class="touch-area" aria-label="発射ボタン">FIRE</button>
+  </div>
+
+  <script src="game.js" defer></script>
+</body>
+</html>
