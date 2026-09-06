@@ -1,6 +1,6 @@
 // シンプルな縦スクロール・シューティング（canvas）
 // タッチ操作（仮想ジョイスティック + 発射ボタン）対応版
-// 追加: 敵ヒット時の効果音（WebAudioで合成）
+// 追加: 敵ヒット時の効果音（WebAudioで合成）と簡易BGM（合成ループ）
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -29,19 +29,86 @@ function ensureAudio() {
   return audioCtx;
 }
 
-// ヒット時の短いエフェクト（合成音）
+// --- 簡易BGM（合成メロディ） ---
+let bgmGain = null;
+let bgmPlaying = false;
+let bgmTimer = null;
+let bgmNoteIndex = 0;
+
+function startBGM() {
+  try {
+    const ac = ensureAudio();
+    if (!ac) return;
+    if (bgmPlaying) return;
+    if (ac.state === 'suspended' && typeof ac.resume === 'function') ac.resume().catch(() => {});
+
+    bgmGain = ac.createGain();
+    bgmGain.gain.value = 0.10; // BGM 音量（調整可）
+    if (masterGain) bgmGain.connect(masterGain); else bgmGain.connect(ac.destination);
+
+    // 簡単なメロディ（周波数, 秒）
+    const notes = [
+      [440, 0.28], [0, 0.06], [440, 0.28], [0, 0.06], [523.25, 0.36], [0, 0.06],
+      [659.25, 0.44], [0, 0.12], [659.25, 0.22], [0, 0.06], [523.25, 0.36], [0, 0.06]
+    ];
+
+    bgmNoteIndex = 0;
+    bgmPlaying = true;
+
+    function scheduleNext() {
+      if (!bgmPlaying) return;
+      const [freq, dur] = notes[bgmNoteIndex];
+      const now = ac.currentTime;
+      if (freq > 0) {
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, now);
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.9);
+        o.connect(g);
+        g.connect(bgmGain);
+        o.start(now);
+        o.stop(now + dur * 0.95);
+      }
+      bgmNoteIndex = (bgmNoteIndex + 1) % notes.length;
+      bgmTimer = setTimeout(scheduleNext, Math.max(30, Math.floor(dur * 1000)));
+    }
+
+    scheduleNext();
+  } catch (e) {
+    console.warn('startBGM error', e);
+  }
+}
+
+function stopBGM() {
+  try {
+    bgmPlaying = false;
+    if (bgmTimer) { clearTimeout(bgmTimer); bgmTimer = null; }
+    if (bgmGain) {
+      try { bgmGain.disconnect(); } catch (e) {}
+      bgmGain = null;
+    }
+  } catch (e) { console.warn('stopBGM', e); }
+}
+
+function toggleBGM() {
+  if (bgmPlaying) stopBGM(); else startBGM();
+}
+
+// --- 既存: ヒット音 ---
 function playHitSound() {
   try {
     const ac = ensureAudio();
     if (!ac) return;
-    // ブリッジ（ユーザー操作時に resume していない場合がある）
     if (ac.state === 'suspended' && typeof ac.resume === 'function') {
       ac.resume().catch(() => {});
     }
 
     const now = ac.currentTime;
 
-    // 高域のピッチ（短いクリック感）
+    // 高域の短いパルス
     const o1 = ac.createOscillator();
     const g1 = ac.createGain();
     o1.type = 'sawtooth';
@@ -54,7 +121,7 @@ function playHitSound() {
     o1.start(now);
     o1.stop(now + 0.18);
 
-    // 低域のパンチ（短いアタック）
+    // 低域のパンチ感
     const o2 = ac.createOscillator();
     const g2 = ac.createGain();
     o2.type = 'triangle';
@@ -67,8 +134,8 @@ function playHitSound() {
     o2.start(now);
     o2.stop(now + 0.25);
 
-    // ノイズ短縮版（微量）
-    const bufferSize = 0.2 * ac.sampleRate;
+    // 短いノイズ（アタックを強調）
+    const bufferSize = Math.floor(0.2 * ac.sampleRate);
     const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -84,7 +151,6 @@ function playHitSound() {
     nb.start(now);
     nb.stop(now + 0.15);
   } catch (e) {
-    // 無音でもゲームは動くようにエラーは無視
     console.warn('playHitSound error', e);
   }
 }
@@ -465,10 +531,16 @@ function startGame(){
   spawnTimer = 30;
   scoreEl.textContent = 'Score: 0';
   livesEl.textContent = 'Lives: 3';
+
+  // BGM を開始
+  startBGM();
 }
 
 function gameOver(){
   running = false;
+  // BGM を停止
+  stopBGM();
+
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(0,0,W,H);
   ctx.fillStyle = '#fff';
