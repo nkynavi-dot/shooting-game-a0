@@ -1,5 +1,6 @@
 // シンプルな縦スクロール・シューティング（canvas）
 // タッチ操作（仮想ジョイスティック + 発射ボタン）対応版
+// 追加: 敵ヒット時の効果音（WebAudioで合成）
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -13,15 +14,101 @@ const fireBtn = document.getElementById('fireBtn');
 
 let W, H;
 
-// ゲーム状態（player を resize 前に宣言して参照エラーを防ぐ）
-let player = null;
-let keys = {};
-let bullets = [];
-let enemies = [];
-let score = 0;
-let lives = 3;
-let running = false;
-let spawnTimer = 0;
+// オーディオ（遅延初期化：ブラウザの自動再生制限対策）
+let audioCtx = null;
+let masterGain = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    audioCtx = new C();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.25; // 全体ボリューム（必要ならここを下げてください）
+    masterGain.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+// ヒット時の短いエフェクト（合成音）
+function playHitSound() {
+  try {
+    const ac = ensureAudio();
+    if (!ac) return;
+    // ブリッジ（ユーザー操作時に resume していない場合がある）
+    if (ac.state === 'suspended' && typeof ac.resume === 'function') {
+      ac.resume().catch(() => {});
+    }
+
+    const now = ac.currentTime;
+
+    // 高域のピッチ（短いクリック感）
+    const o1 = ac.createOscillator();
+    const g1 = ac.createGain();
+    o1.type = 'sawtooth';
+    o1.frequency.setValueAtTime(900, now);
+    g1.gain.setValueAtTime(0.0001, now);
+    g1.gain.exponentialRampToValueAtTime(0.25, now + 0.01);
+    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    o1.connect(g1);
+    g1.connect(masterGain);
+    o1.start(now);
+    o1.stop(now + 0.18);
+
+    // 低域のパンチ（短いアタック）
+    const o2 = ac.createOscillator();
+    const g2 = ac.createGain();
+    o2.type = 'triangle';
+    o2.frequency.setValueAtTime(160, now);
+    g2.gain.setValueAtTime(0.0001, now);
+    g2.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    o2.connect(g2);
+    g2.connect(masterGain);
+    o2.start(now);
+    o2.stop(now + 0.25);
+
+    // ノイズ短縮版（微量）
+    const bufferSize = 0.2 * ac.sampleRate;
+    const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const nb = ac.createBufferSource();
+    nb.buffer = buffer;
+    const ng = ac.createGain();
+    ng.gain.setValueAtTime(0.12, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    nb.connect(ng);
+    ng.connect(masterGain);
+    nb.start(now);
+    nb.stop(now + 0.15);
+  } catch (e) {
+    // 無音でもゲームは動くようにエラーは無視
+    console.warn('playHitSound error', e);
+  }
+}
+
+function setMasterVolume(v) {
+  if (!masterGain) return;
+  masterGain.gain.value = v;
+}
+
+function mute() { if (masterGain) masterGain.gain.value = 0; }
+function unmute() { if (masterGain) masterGain.gain.value = 0.25; }
+
+// ゲームの初期化やUI操作があればオーディオの resume を試みる
+function unlockAudioOnUserGesture() {
+  const ac = ensureAudio();
+  if (!ac) return;
+  if (ac.state === 'suspended' && typeof ac.resume === 'function') {
+    ac.resume().catch(() => {});
+  }
+}
+
+// イベントで解除（start やタッチで呼ぶ）
+startBtn.addEventListener('click', unlockAudioOnUserGesture);
+canvas.addEventListener('touchstart', unlockAudioOnUserGesture, { passive: true });
 
 function resize() {
   W = canvas.width = Math.min(720, window.innerWidth - 20);
@@ -31,6 +118,16 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
+
+// ゲーム状態（player を resize 前に宣言して参照エラーを防ぐ）
+let player = null;
+let keys = {};
+let bullets = [];
+let enemies = [];
+let score = 0;
+let lives = 3;
+let running = false;
+let spawnTimer = 0;
 
 startBtn.addEventListener('click', startGame);
 window.addEventListener('keydown', e => keys[e.key] = true);
@@ -210,6 +307,8 @@ function update(){
         bullets.splice(j,1);
         enemies.splice(i,1);
         score += 1;
+        // 効果音を再生
+        playHitSound();
         break;
       }
     }
@@ -354,6 +453,9 @@ function loop(){
 }
 
 function startGame(){
+  // ユーザー操作があったタイミングで audio を解除
+  unlockAudioOnUserGesture();
+
   score = 0;
   lives = 3;
   bullets = [];
