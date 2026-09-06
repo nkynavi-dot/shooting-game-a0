@@ -238,6 +238,24 @@ function draw(){
   ctx.fillStyle = '#001320';
   ctx.fillRect(0,0,W,H);
 
+  // player が存在しないときはタイトル表示（Start を押すまでここにいる）
+  if (!player) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.textAlign = 'center';
+    ctx.font = '28px sans-serif';
+    ctx.fillText('Simple Shooting Game', W/2, H/2 - 20);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Start ボタンを押してゲームを始めてください', W/2, H/2 + 10);
+
+    // キャンバス内の小さな UI
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(6,6,120,36);
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Score: '+score, 12, 26);
+    return;
+  }
+
   // プレイヤー
   ctx.save();
   ctx.translate(player.x, player.y);
@@ -271,8 +289,13 @@ function draw(){
 }
 
 function loop(){
-  update();
-  draw();
+  try {
+    update();
+    draw();
+  } catch (err) {
+    // エラーが起きてもループは継続するようにログだけ出す
+    console.error('Game loop error:', err);
+  }
   requestAnimationFrame(loop);
 }
 
