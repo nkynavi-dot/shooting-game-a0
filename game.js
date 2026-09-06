@@ -182,7 +182,8 @@ function update(){
   // 発射（キーボード or fire 振る舞い）
   const keyboardFire = (keys[' '] || keys['Spacebar'] || keys['z']);
   if ((keyboardFire || firing) && player.cooldown <= 0){
-    bullets.push({ x: player.x, y: player.y - player.h/2, w:4, h:8, speed:6 });
+    // 弾は機体の先端から出るように調整
+    bullets.push({ x: player.x, y: player.y - player.h * 0.9, w:4, h:8, speed:6 });
     player.cooldown = 12; // 発射間隔
   }
   player.cooldown = Math.max(0, player.cooldown - 1);
@@ -234,6 +235,66 @@ function update(){
   livesEl.textContent = 'Lives: ' + lives;
 }
 
+function drawPlayer() {
+  // 機体（飛行機）を描画。player.x/y を中心に相対描画。
+  ctx.save();
+  ctx.translate(player.x, player.y);
+
+  // スケール基準（元デザイン幅/高さを30x20とする）
+  const sx = player.w / 30;
+  const sy = player.h / 20;
+  ctx.scale(sx, sy);
+
+  // 機体本体（胴体）
+  ctx.fillStyle = '#00ddff';
+  ctx.beginPath();
+  ctx.moveTo(0, -8);
+  ctx.quadraticCurveTo(10, -6, 12, 0);
+  ctx.quadraticCurveTo(10, 6, 0, 8);
+  ctx.quadraticCurveTo(-10, 6, -12, 0);
+  ctx.quadraticCurveTo(-10, -6, 0, -8);
+  ctx.closePath();
+  ctx.fill();
+
+  // ウィング（左右）
+  ctx.fillStyle = '#0088cc';
+  ctx.beginPath();
+  ctx.moveTo(-6, 1);
+  ctx.lineTo(-18, 8);
+  ctx.lineTo(-12, 10);
+  ctx.lineTo(0, 4);
+  ctx.lineTo(12, 10);
+  ctx.lineTo(18, 8);
+  ctx.lineTo(6, 1);
+  ctx.closePath();
+  ctx.fill();
+
+  // コックピット
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(4, -2, 3, 2, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // 垂直尾翼
+  ctx.fillStyle = '#00bcd4';
+  ctx.beginPath();
+  ctx.moveTo(-10, -2);
+  ctx.lineTo(-18, -14);
+  ctx.lineTo(-8, -6);
+  ctx.closePath();
+  ctx.fill();
+
+  // 細かいハイライト
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath();
+  ctx.moveTo(2, -6);
+  ctx.quadraticCurveTo(6, -4, 6, 0);
+  ctx.quadraticCurveTo(6, 4, 2, 6);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function draw(){
   // 背景
   ctx.fillStyle = '#001320';
@@ -257,17 +318,8 @@ function draw(){
     return;
   }
 
-  // プレイヤー
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.fillStyle = '#0ff';
-  ctx.beginPath();
-  ctx.moveTo(0, -player.h/2);
-  ctx.lineTo(player.w/2, player.h/2);
-  ctx.lineTo(-player.w/2, player.h/2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+  // プレイヤー（飛行機）
+  drawPlayer();
 
   // 弾
   ctx.fillStyle = '#ff0';
