@@ -15,6 +15,8 @@ let W, H;
 function resize() {
   W = canvas.width = Math.min(720, window.innerWidth - 20);
   H = canvas.height = Math.max(400, window.innerHeight - 140);
+  // 画面サイズ変更時はプレイヤーの高さを指で隠れにくい位置に維持
+  if (player) player.y = H - 100;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -119,8 +121,6 @@ canvas.addEventListener('touchstart', (e) => {
       firing = true;
     } else {
       // 直接プレイヤーを指に追従させる
-      // store an ad-hoc touch id for direct canvas move
-      // here we just set player.x immediately
       const rect = canvas.getBoundingClientRect();
       const canvasX = (t.clientX - rect.left) * (canvas.width / rect.width);
       if (player) player.x = Math.max(player.w/2, Math.min(W-player.w/2, canvasX));
@@ -152,7 +152,8 @@ canvas.addEventListener('touchend', (e) => {
 function rand(a,b){return Math.random()*(b-a)+a;}
 
 function createPlayer(){
-  return { x: W/2, y: H-60, w: 30, h: 20, speed: 4, cooldown:0 };
+  // 指で隠れにくいよう、やや上（底辺から100px上）に配置
+  return { x: W/2, y: H-100, w: 30, h: 20, speed: 4, cooldown:0 };
 }
 
 function spawnEnemy(){
