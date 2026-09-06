@@ -13,6 +13,15 @@ const joystickHandle = document.getElementById('joystick-handle');
 const fireBtn = document.getElementById('fireBtn');
 
 let W, H;
+// ゲーム状態（player を resize 前に宣言して参照エラーを防ぐ）
+let player = null;
+let keys = {};
+let bullets = [];
+let enemies = [];
+let score = 0;
+let lives = 3;
+let running = false;
+let spawnTimer = 0;
 
 // オーディオ（遅延初期化：ブラウザの自動再生制限対策）
 let audioCtx = null;
@@ -184,16 +193,6 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
-
-// ゲーム状態（player を resize 前に宣言して参照エラーを防ぐ）
-let player = null;
-let keys = {};
-let bullets = [];
-let enemies = [];
-let score = 0;
-let lives = 3;
-let running = false;
-let spawnTimer = 0;
 
 startBtn.addEventListener('click', startGame);
 window.addEventListener('keydown', e => keys[e.key] = true);
@@ -513,7 +512,7 @@ function loop(){
     draw();
   } catch (err) {
     // エラーが起きてもループは継続するようにログだけ出す
-    console.error('Game loop error:', err);
+  console.error('Game loop error:', err);
   }
   requestAnimationFrame(loop);
 }
