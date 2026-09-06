@@ -32,7 +32,7 @@ function ensureAudio() {
     if (!C) return null;
     audioCtx = new C();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.25; // 全体ボリューム（必要ならここを下げてください）
+    masterGain.gain.value = 0.6; // 全体ボリューム（上げました、必要ならここを下げてください）
     masterGain.connect(audioCtx.destination);
   }
   return audioCtx;
@@ -52,7 +52,7 @@ function startBGM() {
     if (ac.state === 'suspended' && typeof ac.resume === 'function') ac.resume().catch(() => {});
 
     bgmGain = ac.createGain();
-    bgmGain.gain.value = 0.10; // BGM 音量（調整可）
+    bgmGain.gain.value = 0.18; // BGM 音量（若干上げました）
     if (masterGain) bgmGain.connect(masterGain); else bgmGain.connect(ac.destination);
 
     // 簡単なメロディ（周波数, 秒）
@@ -170,7 +170,7 @@ function setMasterVolume(v) {
 }
 
 function mute() { if (masterGain) masterGain.gain.value = 0; }
-function unmute() { if (masterGain) masterGain.gain.value = 0.25; }
+function unmute() { if (masterGain) masterGain.gain.value = 0.6; }
 
 // ゲームの初期化やUI操作があればオーディオの resume を試みる
 function unlockAudioOnUserGesture() {
