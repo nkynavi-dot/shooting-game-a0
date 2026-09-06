@@ -114,7 +114,7 @@ function resize() {
   W = canvas.width = Math.min(720, window.innerWidth - 20);
   H = canvas.height = Math.max(400, window.innerHeight - 140);
   // 画面サイズ変更時はプレイヤーの高さを指で隠れにくい位置に維持
-  if (player) player.y = H - 110;
+  if (player) player.y = H - 130;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -250,8 +250,8 @@ canvas.addEventListener('touchend', (e) => {
 function rand(a,b){return Math.random()*(b-a)+a;}
 
 function createPlayer(){
-  // 指で隠れにくいよう、やや上（底辺から110px上）に配置
-  return { x: W/2, y: H-110, w: 30, h: 20, speed: 4, cooldown:0 };
+  // 指で隠れにくいよう、やや上（底辺から130px上）に配置
+  return { x: W/2, y: H-130, w: 30, h: 20, speed: 4, cooldown:0 };
 }
 
 function spawnEnemy(){
