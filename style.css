@@ -1,0 +1,98 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { height: 100%; }
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP";
+  background: linear-gradient(#001, #003);
+  color: #fff;
+}
+#ui {
+  width: 100%;
+  max-width: 720px;
+  display:flex;
+  justify-content: space-between;
+  padding: 10px;
+  gap: 10px;
+}
+#game {
+  width: 100%;
+  max-width: 720px;
+  height: calc(100vh - 80px);
+  background: #012;
+  display:block;
+  border: 2px solid #0af;
+  touch-action: none; /* タッチの既定動作を無効に */
+}
+button { background:#0af; color:#002; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;}
+
+/* タッチコントロールのスタイル */
+#touch-controls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  pointer-events: none; /* 基本は透過だが中のコントロールで上書き */
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.touch-area {
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ジョイスティック（左下） */
+#joystick {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  touch-action: none;
+  user-select: none;
+}
+#joystick-handle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(10,200,200,0.9);
+  transform: translate(0,0);
+  transition: transform 0.05s linear;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* 発射ボタン（右下） */
+#fireBtn {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: rgba(255,50,50,0.9);
+  color: white;
+  font-weight: bold;
+  border: none;
+  margin-right: 6px;
+  touch-action: none;
+  user-select: none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* 小さい画面向けの調整 */
+@media (max-width: 420px) {
+  #joystick { width: 90px; height: 90px; }
+  #joystick-handle { width: 36px; height: 36px; }
+  #fireBtn { width: 72px; height: 72px; font-size:13px; }
+}
